@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     index.html ―― 最初に開かれる画面（今は接続確認専用）
+     ============================================================
+     このファイルの役割：
+       - ブラウザに表示する「土台」となる HTML
+       - 必要な JavaScript を正しい順番で読み込む
+     読み込む順番が大事：
+       1. supabase-js（CDN）… 接続に使う道具
+       2. config.js        … 接続先の設定（URL・キー）
+       3. app.js           … 上の2つを使って接続を確認する本体
+     ============================================================ -->
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- スマホでも見やすくするためのおまじない（PC/スマホ両対応のため） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雑学アプリ ― 接続確認</title>
+  </head>
+  <body>
+    <h1>雑学アプリ（接続確認）</h1>
+
+    <!-- app.js がこの場所に結果メッセージを書き込みます。 -->
+    <p id="status">確認中…</p>
+
+    <!-- ============================================================
+         ログイン用エリア
+         ============================================================
+         ・未ログインのとき → ログインフォーム(#login-form)を表示
+         ・ログイン済みのとき → ログイン情報(#account)を表示
+         どちらを見せるかは app.js が切り替えます。
+         ============================================================ -->
+
+    <!-- (1) ログインフォーム：未ログインのときだけ表示する。
+            form を使うと Enter キーでも送信できて便利。 -->
+    <form id="login-form">
+      <h2>ログイン</h2>
+      <div>
+        <label for="email">メールアドレス</label><br />
+        <!-- type="email" にすると形式チェックが少し効く。
+             required で空のまま送信できないようにする。 -->
+        <input type="email" id="email" required autocomplete="username" />
+      </div>
+      <div>
+        <label for="password">パスワード</label><br />
+        <!-- type="password" にすると入力が伏せ字(●●●)になる。 -->
+        <input
+          type="password"
+          id="password"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+      <button type="submit">ログイン</button>
+    </form>
+
+    <!-- (2) ログイン済みエリア：ログインしているときだけ表示する。
+            最初は hidden で隠しておき、ログイン後に app.js が表示する。 -->
+    <div id="account" hidden>
+      <p id="login-info"></p>
+      <button type="button" id="logout-button">ログアウト</button>
+
+      <!-- ----------------------------------------------------------
+           知識を登録するフォーム
+           ----------------------------------------------------------
+           入力項目は knowledge テーブルの列に合わせている：
+             title          … タイトル（必須）
+             ai_explanation … AIの説明（任意）
+             my_summary     … 自分のまとめ（任意）
+             source         … 出典（任意）
+             tags           … タグ（任意・カンマ区切りで複数）
+           ※ ai_explanation と my_summary は「どちらか一方は必須」。
+           ---------------------------------------------------------- -->
+      <hr />
+      <form id="knowledge-form">
+        <!-- フォームの見出し。新規登録 / 編集 でテキストを切り替える。 -->
+        <h2 id="form-title">知識を登録</h2>
+
+        <div>
+          <label for="title">タイトル（必須）</label><br />
+          <input type="text" id="title" required />
+        </div>
+
+        <div>
+          <label for="ai_explanation">AIの説明（任意）</label><br />
+          <!-- 長文を貼り付けるので textarea（複数行入力欄）にする。 -->
+          <textarea id="ai_explanation" rows="3"></textarea>
+        </div>
+
+        <div>
+          <label for="my_summary">自分のまとめ（任意）</label><br />
+          <textarea id="my_summary" rows="3"></textarea>
+        </div>
+
+        <div>
+          <label for="source">出典（任意・URLや書名）</label><br />
+          <input type="text" id="source" />
+        </div>
+
+        <div>
+          <label for="tags">タグ（任意・カンマ区切りで複数可）</label><br />
+          <!-- 例: 歴史, 科学, メモ  のように入力する。 -->
+          <input type="text" id="tags" placeholder="例: 歴史, 科学" />
+        </div>
+
+        <!-- 送信ボタン。新規=「登録する」/ 編集=「更新する」に切り替える。 -->
+        <button type="submit" id="submit-button">登録する</button>
+        <!-- 編集をやめるためのキャンセルボタン。
+             新規登録モードでは不要なので、最初は hidden で隠しておく。 -->
+        <button type="button" id="cancel-button" hidden>キャンセル</button>
+      </form>
+    </div>
+
+    <!-- ============================================================
+         検索・絞り込みエリア（ログインしていなくても使える）
+         ============================================================
+         ・キーワード検索：title / ai_explanation / my_summary を部分一致
+         ・タグ絞り込み：使われているタグのボタンを押して絞り込む
+         ・両方指定したときは AND（両方を満たすものだけ）
+         ・クリアで全件表示に戻す
+         #account の「外」に置くことで、未ログインの閲覧者にも表示される。
+         ============================================================ -->
+    <hr />
+    <h2>検索・絞り込み</h2>
+    <div>
+      <!-- キーワード検索の入力欄と実行ボタン。 -->
+      <label for="search-input">キーワード</label>
+      <input type="text" id="search-input" placeholder="探したい言葉" />
+      <button type="button" id="search-button">検索</button>
+      <!-- 条件をすべて消して全件表示に戻すボタン。 -->
+      <button type="button" id="reset-button">クリア（全件表示）</button>
+    </div>
+    <div>
+      <!-- いま選んでいる絞り込み条件の表示（例：タグ「歴史」で絞り込み中）。 -->
+      <p id="filter-status"></p>
+      <!-- 使われているタグのボタンを app.js がここへ並べる。 -->
+      <p>タグで絞り込み：</p>
+      <div id="tag-list"></div>
+    </div>
+
+    <!-- ----------------------------------------------------------
+         登録済みの知識の一覧（誰でも閲覧できる）
+         ----------------------------------------------------------
+         ページを開いたとき・登録/更新/削除のとき・検索のときに、
+         app.js がここへ一覧を書き込みます。
+         ---------------------------------------------------------- -->
+    <hr />
+    <h2>登録済みの知識</h2>
+    <div id="knowledge-list">読み込み中…</div>
+
+    <!-- 1) supabase-js を CDN から読み込む（@2 は最新の安定版） -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- 2) 接続設定。app.js より前に読み込む必要がある。 -->
+    <script src="config.js"></script>
+
+    <!-- 3) アプリ本体（接続確認）。最後に読み込む。 -->
+    <script src="app.js"></script>
+  </body>
+</html>
