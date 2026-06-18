@@ -243,9 +243,29 @@ function showDetail(db, item) {
   titleEl.textContent = item.title;
   content.appendChild(titleEl);
 
-  // 「見出し＋本文」を1セット作って追加する小さな部品。
-  //   値が無い項目は呼ばない＝表示しない。
-  function addBlock(label, value) {
+  // 「AIの説明」「自分のまとめ」を、色付きの枠＋バッジで作る部品。
+  //   extraClass = "field-ai" / "field-mine" で色分けする。
+  //   値が無い項目では呼ばない＝枠ごと表示しない。
+  function addFieldBlock(label, value, extraClass) {
+    const block = document.createElement("div");
+    block.className = "field-block " + extraClass;
+
+    // 小さなラベル（バッジ）。
+    const badge = document.createElement("span");
+    badge.className = "field-badge";
+    badge.textContent = label;
+
+    // 本文。
+    const body = document.createElement("p");
+    body.textContent = value;
+
+    block.appendChild(badge);
+    block.appendChild(body);
+    content.appendChild(block);
+  }
+
+  // 「見出し＋本文」だけのシンプルな部品（出典・タグ用。枠で囲わない）。
+  function addPlainBlock(label, value) {
     const heading = document.createElement("h3");
     heading.textContent = label;
     const body = document.createElement("p");
@@ -255,11 +275,17 @@ function showDetail(db, item) {
   }
 
   // 値があるものだけ表示する。
-  if (item.ai_explanation) addBlock("AIの説明", item.ai_explanation);
-  if (item.my_summary) addBlock("自分のまとめ", item.my_summary);
-  if (item.source) addBlock("出典", item.source);
+  // AIの説明・自分のまとめは色付き枠（バッジ付き）で視覚的に分ける。
+  if (item.ai_explanation) {
+    addFieldBlock("AIの説明", item.ai_explanation, "field-ai");
+  }
+  if (item.my_summary) {
+    addFieldBlock("自分のまとめ", item.my_summary, "field-mine");
+  }
+  // 出典・タグはこれまでどおりの見せ方。
+  if (item.source) addPlainBlock("出典", item.source);
   if (item.tags && item.tags.length > 0) {
-    addBlock("タグ", item.tags.join(", "));
+    addPlainBlock("タグ", item.tags.join(", "));
   }
 
   // 編集・削除ボタンは、ログイン中(currentUser がある)のときだけ表示する。
@@ -541,9 +567,9 @@ async function loadKnowledgeList(db) {
     // 1件分の入れ物。
     const card = document.createElement("div");
 
-    // タイトル（見出し）。クリックすると詳細画面へ移動する。
-    //   ※ 編集／削除ボタンは一覧から外し、操作は詳細画面に集約した。
-    //     一覧はスッキリ見せ、タイトルが詳細への入口になる。
+    // 一覧は「タイトルのみ」表示にする。クリックで詳細画面へ移動する。
+    //   ※ AIの説明・自分のまとめ・出典・タグは一覧では出さず、詳細画面で見せる。
+    //     一覧はタイトルだけのスッキリした行にして探しやすくする。
     const titleEl = document.createElement("h3");
     titleEl.textContent = item.title;
     titleEl.style.cursor = "pointer"; // クリックできると分かるように
@@ -551,31 +577,6 @@ async function loadKnowledgeList(db) {
       showDetail(db, item);
     });
     card.appendChild(titleEl);
-
-    // AIの説明（あれば表示）。
-    if (item.ai_explanation) {
-      const p = document.createElement("p");
-      p.textContent = "AIの説明: " + item.ai_explanation;
-      card.appendChild(p);
-    }
-    // 自分のまとめ（あれば表示）。
-    if (item.my_summary) {
-      const p = document.createElement("p");
-      p.textContent = "自分のまとめ: " + item.my_summary;
-      card.appendChild(p);
-    }
-    // 出典（あれば表示）。
-    if (item.source) {
-      const p = document.createElement("p");
-      p.textContent = "出典: " + item.source;
-      card.appendChild(p);
-    }
-    // タグ（配列。1個以上あれば表示）。
-    if (item.tags && item.tags.length > 0) {
-      const p = document.createElement("p");
-      p.textContent = "タグ: " + item.tags.join(", ");
-      card.appendChild(p);
-    }
 
     // 件ごとの区切り線を入れて、入れ物を一覧に追加。
     card.appendChild(document.createElement("hr"));
