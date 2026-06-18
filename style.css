@@ -99,6 +99,13 @@ hr {
   font-size: 0.9rem;
 }
 
+/* 登録件数の表示。補助テキストらしく控えめに。 */
+#count-status {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 4px 0 12px;
+}
+
 /* ---------- 入力欄 ---------- */
 
 label {

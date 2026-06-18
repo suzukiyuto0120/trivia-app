@@ -550,6 +550,10 @@ async function loadKnowledgeList(db) {
     return;
   }
 
+  // 件数表示を更新する（絞り込み後の件数 = data の件数）。
+  const filteredCount = data ? data.length : 0;
+  updateCountStatus(db, filteredCount);
+
   // 1件も無いときの表示。
   // 検索条件があるかどうかで、メッセージを分かりやすく変える。
   if (!data || data.length === 0) {
@@ -582,6 +586,37 @@ async function loadKnowledgeList(db) {
     card.appendChild(document.createElement("hr"));
     listBox.appendChild(card);
   });
+}
+
+// (2-b) 件数表示を更新する。
+//   filteredCount = いま一覧に出ている（絞り込み後の）件数。
+//   全体の総件数は、件数だけを数える軽い問い合わせで別途取得する。
+async function updateCountStatus(db, filteredCount) {
+  const countEl = document.getElementById("count-status");
+
+  // 全体の総件数を取得する。
+  //   count: "exact" で正確な件数を、head: true でデータ本体は取らず件数だけ。
+  const { count, error } = await db
+    .from("knowledge")
+    .select("*", { count: "exact", head: true });
+
+  if (error) {
+    console.error("❌ 件数の取得に失敗:", error);
+    countEl.textContent = "";
+    return;
+  }
+
+  const total = count || 0;
+
+  // 絞り込み中かどうかで表示を出し分ける。
+  if (currentKeyword === "" && currentTag === null) {
+    // 絞り込みなし：全件表示。
+    countEl.textContent = "全" + total + "件";
+  } else {
+    // 絞り込みあり：見つかった件数と全体件数の両方を見せる。
+    countEl.textContent =
+      filteredCount + "件見つかりました（全" + total + "件中）";
+  }
 }
 
 // ============================================================
