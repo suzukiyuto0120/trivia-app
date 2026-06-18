@@ -1,0 +1,241 @@
+/* ============================================================
+   style.css ―― TriviaVerse の見た目（CSS）
+   ============================================================
+   方針：落ち着いた知的な雰囲気。紺／グレー基調。
+   ・HTML の構造・id・JS は一切変えず、見た目だけをここで整える。
+   ・色は CSS 変数（:root）にまとめておき、後で調整しやすくする。
+   ============================================================ */
+
+/* 色の設定をまとめておく「変数」。var(--名前) で各所から使う。 */
+:root {
+  --base-bg: #f4f5f7;     /* ページ全体の背景（明るいグレー） */
+  --card-bg: #ffffff;     /* カード・コンテンツ領域（白） */
+  --navy: #25304d;        /* 見出し・主要テキスト・主ボタン（濃紺） */
+  --navy-dark: #1f2a44;   /* 主ボタンの hover 用（少し暗い紺） */
+  --accent: #3b5bdb;      /* リンクやフォーカスのアクセント（明るい青） */
+  --border: #d0d4da;      /* 入力欄などの罫線（グレー） */
+  --line: #e5e7eb;        /* 区切り線（薄いグレー） */
+  --muted: #6b7280;       /* 補助テキスト（グレー） */
+  --text: #374151;        /* 本文テキスト（やや濃いグレー） */
+}
+
+/* box-sizing を border-box に。width:100% に padding を含められて扱いやすい。 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ページ全体の背景（グレー）。左右に少し余白をとり、スマホでも端に貼り付かない。 */
+html {
+  background: var(--base-bg);
+  padding: 0 16px;
+}
+
+/* メインコンテンツを「白いカード」にして中央に置く。 */
+body {
+  font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  max-width: 720px;       /* 横に広がりすぎないよう最大幅を決める */
+  margin: 24px auto;      /* 上下に余白＋左右 auto で中央寄せ */
+  padding: 24px 28px;
+  background: var(--card-bg);
+  border-radius: 8px;     /* 角丸（控えめ） */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* うっすら影で上品に */
+}
+
+/* ---------- 見出し ---------- */
+
+h1 {
+  color: var(--navy);
+  font-size: 1.9rem;
+  margin: 0 0 4px;
+}
+
+/* h1 の下の一言説明（補助テキスト）。 */
+.tagline {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0 0 20px;
+}
+
+/* セクション見出し。上に余白＋下に薄い罫線で区切りを作る。 */
+h2 {
+  color: var(--navy);
+  font-size: 1.3rem;
+  margin-top: 28px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+
+/* 知識カードのタイトルなど。 */
+h3 {
+  color: var(--navy);
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+/* 区切り線を薄いグレーの細い線に。 */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--line);
+  margin: 20px 0;
+}
+
+/* ---------- 状態メッセージ ---------- */
+/* 成功（緑）／失敗（赤）の文字色は app.js が直接指定するため、
+   ここでは太字と余白だけ整える。 */
+#status {
+  font-weight: 600;
+  margin: 12px 0;
+}
+
+/* 絞り込み状況などの補助テキスト。 */
+#filter-status {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- 入力欄 ---------- */
+
+label {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+input,
+textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--navy);
+  font: inherit;
+}
+
+/* フォーカス時はアクセント青の枠＋淡いリングで分かりやすく。 */
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 91, 219, 0.2);
+}
+
+/* フォーム内の入力欄は横幅いっぱいに。各項目の間隔も整える。 */
+#login-form input,
+#knowledge-form input,
+#knowledge-form textarea {
+  width: 100%;
+}
+
+#login-form div,
+#knowledge-form div {
+  margin-bottom: 12px;
+}
+
+/* 検索のキーワード欄は固定幅（狭い画面では下のメディアクエリで全幅に）。 */
+#search-input {
+  width: 240px;
+  max-width: 100%;
+}
+
+/* ---------- ボタン ---------- */
+/* 基本（副ボタン）：白背景＋紺枠線の控えめなスタイル。
+   キャンセル・クリア・ログアウトはこのままの見た目になる。 */
+button {
+  font: inherit;
+  cursor: pointer;
+  padding: 8px 16px;
+  margin: 4px 4px 4px 0;
+  border: 1px solid var(--navy);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--navy);
+}
+
+button:hover {
+  background: #f0f2f7;
+}
+
+/* 主ボタン（ログイン・登録/更新する・検索）：濃紺背景＋白文字。 */
+#login-form button[type="submit"],
+#submit-button,
+#search-button {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+#login-form button[type="submit"]:hover,
+#submit-button:hover,
+#search-button:hover {
+  background: var(--navy-dark);
+}
+
+/* ---------- タグ絞り込みボタン（チップ風） ---------- */
+#tag-list button {
+  background: #eef1f8;
+  color: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 999px; /* 大きい値で丸いチップ形に */
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+#tag-list button:hover {
+  background: #e1e7f5;
+}
+
+/* ---------- 登録済みの知識カード ---------- */
+/* 一覧の各件（app.js が作る div）を白カードとして区切る。 */
+#knowledge-list > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+#knowledge-list > div p {
+  margin: 4px 0;
+}
+
+/* カードの中の区切り線は、カードの枠と重なって冗長なので隠す。 */
+#knowledge-list > div hr {
+  display: none;
+}
+
+/* カード内の編集・削除ボタンは小さめに。 */
+#knowledge-list button {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   スマホ対応（画面幅 600px 以下）
+   ============================================================
+   ・余白とフォントを少し詰める
+   ・検索欄とボタンを縦に積んで、横にはみ出さないようにする
+   ============================================================ */
+@media (max-width: 600px) {
+  html {
+    padding: 0 10px;
+  }
+  body {
+    margin: 12px auto;
+    padding: 16px;
+  }
+  h1 {
+    font-size: 1.6rem;
+  }
+  /* 検索のキーワード欄とボタンを全幅にして縦に並べる。 */
+  #search-input,
+  #search-button,
+  #reset-button {
+    width: 100%;
+    margin-left: 0;
+  }
+}
