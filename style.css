@@ -227,6 +227,22 @@ button:hover {
   margin: 0;
 }
 
+/* ランダム画面の一覧も、ホーム一覧のカードと同じ見た目に揃える。 */
+#random-list > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+#random-list > div h3 {
+  margin: 0;
+}
+/* カード内の区切り線は枠と重なって冗長なので隠す（ホームと同様）。 */
+#random-list > div hr {
+  display: none;
+}
+
 /* ---------- 詳細画面：色付きの枠＋バッジ ---------- */
 /* AIの説明 / 自分のまとめ を視覚的に分けるための枠。 */
 .field-block {

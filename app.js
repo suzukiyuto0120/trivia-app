@@ -214,16 +214,18 @@ function setupAuth(db) {
 // 1つだけを表示し、残りを隠すことで「画面が切り替わった」ように見せる。
 // ------------------------------------------------------------
 
-// (N-1) 画面切り替え：name は "home" / "detail" / "edit" のいずれか。
+// (N-1) 画面切り替え：name は "home" / "detail" / "edit" / "random" のいずれか。
 function showView(name) {
   const home = document.getElementById("view-home");
   const detail = document.getElementById("view-detail");
   const edit = document.getElementById("view-edit");
+  const random = document.getElementById("view-random");
 
   // 該当する1つだけ hidden=false（表示）、残りは hidden=true（非表示）。
   home.hidden = name !== "home";
   detail.hidden = name !== "detail";
   edit.hidden = name !== "edit";
+  random.hidden = name !== "random";
 
   // 画面が変わったらページ先頭まで戻す（長い内容でも上から読めるように）。
   window.scrollTo(0, 0);
@@ -304,6 +306,9 @@ function setupNavigation(db) {
   const backButton = document.getElementById("detail-back-button");
   const detailEditButton = document.getElementById("detail-edit-button");
   const detailDeleteButton = document.getElementById("detail-delete-button");
+  const randomButton = document.getElementById("random-button");
+  const randomBackButton = document.getElementById("random-back-button");
+  const randomShuffleButton = document.getElementById("random-shuffle-button");
 
   // 「＋ 新規登録」：新規モードにしてから編集画面へ。
   newButton.addEventListener("click", function () {
@@ -313,6 +318,22 @@ function setupNavigation(db) {
 
   // 「← 一覧に戻る」：ホーム画面へ。
   backButton.addEventListener("click", function () {
+    showView("home");
+  });
+
+  // 「ランダムに見る」：ランダムに引き直してからランダム画面へ。
+  randomButton.addEventListener("click", function () {
+    loadRandomList(db);
+    showView("random");
+  });
+
+  // 「次のランダム」：別の最大10件に引き直す（画面はそのまま）。
+  randomShuffleButton.addEventListener("click", function () {
+    loadRandomList(db);
+  });
+
+  // ランダム画面の「← 一覧に戻る」：ホーム画面へ。
+  randomBackButton.addEventListener("click", function () {
     showView("home");
   });
 
@@ -617,6 +638,59 @@ async function updateCountStatus(db, filteredCount) {
     countEl.textContent =
       filteredCount + "件見つかりました（全" + total + "件中）";
   }
+}
+
+// (2-c) ランダム表示：登録済みからランダムに最大10件を「タイトルのみ」で並べる。
+async function loadRandomList(db) {
+  const listBox = document.getElementById("random-list");
+
+  // 詳細表示(showDetail)にも使えるよう、全件を全項目つきで取得する。
+  const { data, error } = await db.from("knowledge").select("*");
+
+  if (error) {
+    console.error("❌ ランダム取得に失敗:", error);
+    listBox.textContent = "取得に失敗しました: " + error.message;
+    return;
+  }
+
+  // 0件のときの表示。
+  if (!data || data.length === 0) {
+    listBox.textContent = "まだ知識が登録されていません。";
+    return;
+  }
+
+  // 配列をランダムに並べ替える（Fisher–Yatesシャッフル）。
+  //   末尾から順に、ランダムな位置の要素と入れ替えていく。
+  //   元データを壊さないよう、コピー(slice)してから並べ替える。
+  const shuffled = data.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = tmp;
+  }
+
+  // 先頭から最大10件を取り出す。
+  const picked = shuffled.slice(0, 10);
+
+  // いったん空にしてから、各件を「タイトルのみ」で並べる。
+  //   見た目は #knowledge-list と合わせる（div + クリックできる h3）。
+  listBox.innerHTML = "";
+  picked.forEach(function (item) {
+    const card = document.createElement("div");
+
+    const titleEl = document.createElement("h3");
+    titleEl.textContent = item.title;
+    titleEl.style.cursor = "pointer"; // クリックできると分かるように
+    titleEl.addEventListener("click", function () {
+      showDetail(db, item); // 既存の詳細表示へ
+    });
+    card.appendChild(titleEl);
+
+    // 件ごとの区切り線（#knowledge-list と同じ作り）。
+    card.appendChild(document.createElement("hr"));
+    listBox.appendChild(card);
+  });
 }
 
 // ============================================================
