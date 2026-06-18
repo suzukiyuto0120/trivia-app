@@ -150,6 +150,13 @@ textarea {
   font: inherit;
 }
 
+/* textarea は縦方向だけドラッグで伸縮できるようにする
+   （横に伸ばすとレイアウトが崩れるので縦のみ）。最低限の高さも確保。 */
+textarea {
+  resize: vertical;
+  min-height: 7.5em;
+}
+
 /* フォーカス時は金の枠＋淡い金のリングで分かりやすく。 */
 input:focus,
 textarea:focus {
@@ -324,6 +331,15 @@ button:hover {
 /* 枠内の本文は上下の余白を控えめに（バッジの直下に置くため）。 */
 .field-block p {
   margin: 6px 0 0;
+}
+
+/* 詳細画面の本文は、入力時の改行・連続スペースをそのまま表示する。
+   pre-wrap = 「改行は保持／長い行は折り返す」（横スクロールは出さない）。
+   .field-block p … AIの説明・自分のまとめの本文
+   #detail-content > p … 出典・タグなど（addPlainBlock の本文）。 */
+#detail-content .field-block p,
+#detail-content > p {
+  white-space: pre-wrap;
 }
 
 /* AIの説明：くすんだ羊皮紙色＋古びた金茶のアクセント枠線。 */
