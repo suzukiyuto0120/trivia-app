@@ -767,10 +767,13 @@ async function loadRandomList(db) {
   // いったん空にしてから、各件を「タイトルのみ」で並べる。
   //   見た目は #knowledge-list と合わせる（div + クリックできる h3）。
   listBox.innerHTML = "";
-  picked.forEach(function (item) {
+  picked.forEach(function (item, i) {
     const card = document.createElement("div");
     // 左端の縦ライン（背表紙）を、最初のタグの色にする。
     card.style.borderLeft = "5px solid " + spineColor(item);
+    // 登場アニメーション。1枚ずつ少し遅らせて、順にふわっと現れる。
+    card.classList.add("card-appear");
+    card.style.animationDelay = i * 0.05 + "s";
 
     const titleEl = document.createElement("h3");
     titleEl.textContent = item.title;

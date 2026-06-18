@@ -231,6 +231,16 @@ button:hover {
   filter: brightness(0.95);
 }
 
+/* ---------- 一覧をグリッド（書棚）で並べる ---------- */
+/* カードを横に複数枚タイル状に並べる。auto-fill で幅に応じて枚数が変わる。 */
+#knowledge-list,
+#random-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  align-items: start; /* 高さがバラついても上揃えで綺麗に並ぶ */
+}
+
 /* ---------- 登録済みの知識カード（本の背表紙イメージ） ---------- */
 /* 一覧・ランダムの各件（app.js が作る div）をクリーム色のカードとして区切る。
    左端の縦ライン（border-left）は app.js が「最初のタグの色」で設定する
@@ -281,6 +291,26 @@ button:hover {
 #knowledge-list > div:hover h3,
 #random-list > div:hover h3 {
   color: var(--gold-dark);
+}
+
+/* ---------- ランダム表示の登場アニメーション ---------- */
+/* ふわっと現れて、少し下から上へ動く。 */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ランダムのカードにだけ付ける（一覧 #knowledge-list には付けない）。
+   控えめな時間で1回だけ。終了後は to の状態（opacity:1 / translateY(0)）で
+   固定されるので、その後はホバーの浮き上がり transform が普通に効く。 */
+.card-appear {
+  animation: cardFadeIn 0.35s ease both;
 }
 
 /* ---------- 詳細画面：色付きの枠＋バッジ ---------- */
@@ -350,5 +380,10 @@ button:hover {
   #reset-button {
     width: 100%;
     margin-left: 0;
+  }
+  /* 狭い画面では一覧・ランダムを1列に戻して読みやすくする。 */
+  #knowledge-list,
+  #random-list {
+    grid-template-columns: 1fr;
   }
 }
