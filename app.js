@@ -50,14 +50,18 @@ try {
 
   // (D) 接続できたら、続けて各機能の準備を始める。
   //     （クライアント supabaseClient を渡して使ってもらう）
-  setupAuth(supabaseClient);    // ログイン／ログアウト
-  setupSearch(supabaseClient);  // 検索・絞り込みの操作
+  setupAuth(supabaseClient);        // ログイン／ログアウト
+  setupSearch(supabaseClient);      // 検索・絞り込みの操作
+  setupNavigation(supabaseClient);  // 画面切り替え（ホーム／詳細／編集）のボタン
 
   // (E) ページを開いた時点で、一覧とタグ一覧を読み込む。
   //     一覧と検索は「未ログインの閲覧者でも使える」ので、
   //     ログイン状態に関係なく、ここで必ず読み込む。
   loadKnowledgeList(supabaseClient);
   loadTagList(supabaseClient);
+
+  // (F) 起動時はホーム画面（一覧）を表示する。
+  showView("home");
 } catch (err) {
   // どこかで失敗したらここに来る。原因をコンソールと画面に出す。
   console.error("❌ Supabase への接続準備に失敗しました:", err);
@@ -89,6 +93,10 @@ let editingId = null;
 let currentKeyword = ""; // キーワード検索の文字（空なら条件なし）
 let currentTag = null;   // 絞り込み中のタグ（null なら条件なし）
 
+// いま詳細画面で表示している知識（無ければ null）。
+// 詳細画面の「編集」「削除」ボタンから、どの知識かを参照するために使う。
+let currentDetailItem = null;
+
 function setupAuth(db) {
   // HTML の要素を取得しておく（毎回探さなくていいよう変数に入れる）。
   const loginForm = document.getElementById("login-form");   // ログインフォーム
@@ -97,6 +105,24 @@ function setupAuth(db) {
   const logoutButton = document.getElementById("logout-button");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
+  const newButton = document.getElementById("new-button"); // ＋新規登録ボタン
+
+  // --- 「ログイン」トグルボタンを用意する -------------------
+  // 普段はログインフォームを隠しておき、このボタンを押したときだけ開く方針。
+  // index.html に #login-toggle があればそれを使い、無ければJSで作る。
+  let loginToggle = document.getElementById("login-toggle");
+  if (!loginToggle) {
+    loginToggle = document.createElement("button");
+    loginToggle.type = "button";
+    loginToggle.id = "login-toggle";
+    loginToggle.textContent = "ログイン";
+    // ログインフォームのすぐ前に置く（ヘッダー内）。
+    loginForm.parentNode.insertBefore(loginToggle, loginForm);
+  }
+  // トグルボタン：押すたびにログインフォームの表示／非表示を切り替える。
+  loginToggle.addEventListener("click", function () {
+    loginForm.hidden = !loginForm.hidden;
+  });
 
   // --- 画面の表示を切り替える関数 ---------------------------
   // user が居れば「ログイン中の画面」、居なければ「フォーム画面」にする。
@@ -104,19 +130,23 @@ function setupAuth(db) {
     // いまのログイン状態を覚えておく（一覧のボタン表示判定で使う）。
     currentUser = user;
     if (user) {
-      // ログイン中：ログインフォームを隠して、アカウント情報を見せる。
+      // ログイン中：ログインフォームとログインボタンを隠し、アカウント情報を見せる。
       loginForm.hidden = true;
+      loginToggle.hidden = true;
       accountBox.hidden = false;
       loginInfo.textContent = "ログインしました（" + user.email + "）";
+      newButton.hidden = false; // ＋新規登録はログイン中だけ
     } else {
-      // 未ログイン：ログインフォームを見せて、アカウント情報を隠す。
-      loginForm.hidden = false;
+      // 未ログイン：ログインフォームは既定で隠し（トグルで開く）、
+      //             ログインボタンを見せ、アカウント情報を隠す。
+      loginForm.hidden = true;
+      loginToggle.hidden = false;
       accountBox.hidden = true;
       loginInfo.textContent = "";
+      newButton.hidden = true; // 未ログインでは＋新規登録を隠す
     }
 
     // ログイン状態が変わったら一覧を読み込み直す。
-    // こうすると、ログイン中だけ「編集／削除」ボタンが出る／消える。
     loadKnowledgeList(db);
   }
 
@@ -174,6 +204,106 @@ function setupAuth(db) {
     }
     showStatus("ログアウトしました", false);
     updateView(null); // 未ログインの画面に戻す
+  });
+}
+
+// ============================================================
+// ここから下：画面切り替え（ホーム／詳細／編集）
+// ============================================================
+// 3つの画面エリア（#view-home / #view-detail / #view-edit）のうち、
+// 1つだけを表示し、残りを隠すことで「画面が切り替わった」ように見せる。
+// ------------------------------------------------------------
+
+// (N-1) 画面切り替え：name は "home" / "detail" / "edit" のいずれか。
+function showView(name) {
+  const home = document.getElementById("view-home");
+  const detail = document.getElementById("view-detail");
+  const edit = document.getElementById("view-edit");
+
+  // 該当する1つだけ hidden=false（表示）、残りは hidden=true（非表示）。
+  home.hidden = name !== "home";
+  detail.hidden = name !== "detail";
+  edit.hidden = name !== "edit";
+
+  // 画面が変わったらページ先頭まで戻す（長い内容でも上から読めるように）。
+  window.scrollTo(0, 0);
+}
+
+// (N-2) 詳細表示：1件の知識を詳細画面に表示して、その画面へ切り替える。
+function showDetail(db, item) {
+  // どの知識を表示中かを覚える（詳細画面の編集・削除ボタンから参照する）。
+  currentDetailItem = item;
+
+  const content = document.getElementById("detail-content");
+  // いったん中身を空にしてから、項目を組み立てて入れる。
+  content.innerHTML = "";
+
+  // タイトル（見出し）。
+  const titleEl = document.createElement("h2");
+  titleEl.textContent = item.title;
+  content.appendChild(titleEl);
+
+  // 「見出し＋本文」を1セット作って追加する小さな部品。
+  //   値が無い項目は呼ばない＝表示しない。
+  function addBlock(label, value) {
+    const heading = document.createElement("h3");
+    heading.textContent = label;
+    const body = document.createElement("p");
+    body.textContent = value;
+    content.appendChild(heading);
+    content.appendChild(body);
+  }
+
+  // 値があるものだけ表示する。
+  if (item.ai_explanation) addBlock("AIの説明", item.ai_explanation);
+  if (item.my_summary) addBlock("自分のまとめ", item.my_summary);
+  if (item.source) addBlock("出典", item.source);
+  if (item.tags && item.tags.length > 0) {
+    addBlock("タグ", item.tags.join(", "));
+  }
+
+  // 編集・削除ボタンは、ログイン中(currentUser がある)のときだけ表示する。
+  const editButton = document.getElementById("detail-edit-button");
+  const deleteButton = document.getElementById("detail-delete-button");
+  editButton.hidden = !currentUser;
+  deleteButton.hidden = !currentUser;
+
+  // 詳細画面へ切り替える。
+  showView("detail");
+}
+
+// (N-3) 画面切り替え用ボタンの配線（新規・戻る・編集・削除）。
+function setupNavigation(db) {
+  const newButton = document.getElementById("new-button");
+  const backButton = document.getElementById("detail-back-button");
+  const detailEditButton = document.getElementById("detail-edit-button");
+  const detailDeleteButton = document.getElementById("detail-delete-button");
+
+  // 「＋ 新規登録」：新規モードにしてから編集画面へ。
+  newButton.addEventListener("click", function () {
+    exitEditMode();     // 既存関数：フォームを空にして新規モードに
+    showView("edit");
+  });
+
+  // 「← 一覧に戻る」：ホーム画面へ。
+  backButton.addEventListener("click", function () {
+    showView("home");
+  });
+
+  // 詳細画面の「編集」：いま表示中の知識をフォームに読み込んで編集画面へ。
+  detailEditButton.addEventListener("click", function () {
+    if (!currentDetailItem) return;
+    enterEditMode(currentDetailItem); // 既存関数：内容をフォームへ
+    showView("edit");
+  });
+
+  // 詳細画面の「削除」：確認付き削除（既存関数）。成功したらホームへ。
+  detailDeleteButton.addEventListener("click", async function () {
+    if (!currentDetailItem) return;
+    const deleted = await deleteKnowledge(db, currentDetailItem);
+    if (deleted) {
+      showView("home");
+    }
   });
 }
 
@@ -276,12 +406,14 @@ function setupKnowledge(db) {
     exitEditMode();        // フォームを空にして新規登録モードへ戻す
     loadKnowledgeList(db); // 一覧を読み込み直して、変更を反映する
     loadTagList(db);       // タグが増減した可能性があるのでタグ一覧も更新
+    showView("home");      // 保存できたらホーム（一覧）画面へ戻る
   });
 
-  // キャンセルボタン：編集をやめて新規登録モードに戻す。
+  // キャンセルボタン：編集をやめて新規登録モードに戻し、ホームへ戻る。
   cancelButton.addEventListener("click", function () {
     exitEditMode();
     showStatus("編集をやめました。", false);
+    showView("home");
   });
 }
 
@@ -319,12 +451,14 @@ function exitEditMode() {
 }
 
 // (1-d) 削除：確認を挟んでから、その知識をテーブルから消す。
+//   戻り値: 削除できたら true、キャンセル/失敗なら false。
+//   （呼び出し側が「成功したら画面を切り替える」判断に使えるようにするため）
 async function deleteKnowledge(db, item) {
   // window.confirm はブラウザ標準の確認ダイアログ。
   // 「OK」で true、「キャンセル」で false が返る。
   const ok = window.confirm("「" + item.title + "」を本当に削除しますか？");
   if (!ok) {
-    return; // キャンセルされたら何もしない
+    return false; // キャンセルされたら何もしない
   }
 
   // id が一致する行だけを削除する（.eq の付け忘れに注意）。
@@ -334,7 +468,7 @@ async function deleteKnowledge(db, item) {
   if (error) {
     console.error("❌ 削除に失敗:", error);
     showStatus("❌ 削除に失敗しました: " + error.message, true);
-    return;
+    return false;
   }
 
   // もし削除した行を編集中だったら、編集モードも解除しておく。
@@ -345,6 +479,7 @@ async function deleteKnowledge(db, item) {
   showStatus("✅ 削除しました。", false);
   loadKnowledgeList(db); // 一覧を更新する
   loadTagList(db);       // タグが減った可能性があるのでタグ一覧も更新
+  return true;
 }
 
 // (2) 一覧の読み込みと表示。
@@ -406,9 +541,15 @@ async function loadKnowledgeList(db) {
     // 1件分の入れ物。
     const card = document.createElement("div");
 
-    // タイトル（見出し）。
+    // タイトル（見出し）。クリックすると詳細画面へ移動する。
+    //   ※ 編集／削除ボタンは一覧から外し、操作は詳細画面に集約した。
+    //     一覧はスッキリ見せ、タイトルが詳細への入口になる。
     const titleEl = document.createElement("h3");
     titleEl.textContent = item.title;
+    titleEl.style.cursor = "pointer"; // クリックできると分かるように
+    titleEl.addEventListener("click", function () {
+      showDetail(db, item);
+    });
     card.appendChild(titleEl);
 
     // AIの説明（あれば表示）。
@@ -434,29 +575,6 @@ async function loadKnowledgeList(db) {
       const p = document.createElement("p");
       p.textContent = "タグ: " + item.tags.join(", ");
       card.appendChild(p);
-    }
-
-    // --- 編集・削除ボタン（ログイン中だけ表示） -----------
-    // currentUser が居る＝ログイン中のときだけボタンを作る。
-    // 未ログインの閲覧者には、これらのボタンは表示されない。
-    if (currentUser) {
-      // 編集ボタン：押すとこの item の内容をフォームに読み込む。
-      const editButton = document.createElement("button");
-      editButton.type = "button";
-      editButton.textContent = "編集";
-      editButton.addEventListener("click", function () {
-        enterEditMode(item);
-      });
-      card.appendChild(editButton);
-
-      // 削除ボタン：押すと確認のうえ、この item を削除する。
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.textContent = "削除";
-      deleteButton.addEventListener("click", function () {
-        deleteKnowledge(db, item);
-      });
-      card.appendChild(deleteButton);
     }
 
     // 件ごとの区切り線を入れて、入れ物を一覧に追加。
