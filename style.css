@@ -6,17 +6,33 @@
    ・色は CSS 変数（:root）にまとめておき、後で調整しやすくする。
    ============================================================ */
 
-/* 色の設定をまとめておく「変数」。var(--名前) で各所から使う。 */
+/* ============================================================
+   テーマ：ヴィクトリア朝の書斎
+   ・羊皮紙（クリーム）色の背景＋深い紺＋くすんだ真鍮ゴールド。
+   ・見出しはセリフ体で格調を、本文はゴシックで可読性を保つ。
+   ============================================================ */
+
+/* 色・フォントの設定をまとめておく「変数」。var(--名前) で各所から使う。 */
 :root {
-  --base-bg: #f4f5f7;     /* ページ全体の背景（明るいグレー） */
-  --card-bg: #ffffff;     /* カード・コンテンツ領域（白） */
-  --navy: #25304d;        /* 見出し・主要テキスト・主ボタン（濃紺） */
-  --navy-dark: #1f2a44;   /* 主ボタンの hover 用（少し暗い紺） */
-  --accent: #3b5bdb;      /* リンクやフォーカスのアクセント（明るい青） */
-  --border: #d0d4da;      /* 入力欄などの罫線（グレー） */
-  --line: #e5e7eb;        /* 区切り線（薄いグレー） */
-  --muted: #6b7280;       /* 補助テキスト（グレー） */
-  --text: #374151;        /* 本文テキスト（やや濃いグレー） */
+  --paper: #f3eee2;       /* ページ全体の背景（淡い羊皮紙色） */
+  --paper-card: #faf7f0;  /* カード・コンテンツ領域（明るいクリーム） */
+  --navy: #222b45;        /* 見出し・主要テキスト・主ボタン（深い紺） */
+  --navy-dark: #19203a;   /* 主ボタンの hover 用（さらに暗い紺） */
+  --gold: #a8862a;        /* アクセント（くすんだ真鍮ゴールド） */
+  --gold-dark: #876a1c;   /* ゴールドの濃いめ（ホバーや文字用） */
+  --accent: #a8862a;      /* リンクやフォーカスのアクセント（金） */
+  --border: #d8cdb4;      /* 入力欄などの罫線（温かみのあるベージュ） */
+  --line: #e3dac4;        /* 区切り線（淡いベージュ） */
+  --muted: #7a6f5b;       /* 補助テキスト（くすんだ茶グレー） */
+  --text: #3a3326;        /* 本文テキスト（温かみのある濃い茶） */
+
+  /* 後方互換：以前 --base-bg / --card-bg を参照していた箇所のための別名。 */
+  --base-bg: var(--paper);
+  --card-bg: var(--paper-card);
+
+  /* 見出し用のセリフ体フォント。 */
+  --serif: "Georgia", "Times New Roman", "Hiragino Mincho ProN",
+    "Yu Mincho", serif;
 }
 
 /* box-sizing を border-box に。width:100% に padding を含められて扱いやすい。 */
@@ -32,7 +48,7 @@ html {
   padding: 0 16px;
 }
 
-/* メインコンテンツを「白いカード」にして中央に置く。 */
+/* メインコンテンツを「クリーム色のカード」にして中央に置く。 */
 body {
   font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN",
     "Noto Sans JP", sans-serif;
@@ -41,43 +57,54 @@ body {
   max-width: 720px;       /* 横に広がりすぎないよう最大幅を決める */
   margin: 24px auto;      /* 上下に余白＋左右 auto で中央寄せ */
   padding: 24px 28px;
-  background: var(--card-bg);
+  background: var(--paper-card);
+  border: 1px solid var(--border);
   border-radius: 8px;     /* 角丸（控えめ） */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* うっすら影で上品に */
+  box-shadow: 0 2px 10px rgba(60, 45, 20, 0.12); /* 温かみのある影 */
 }
 
-/* ---------- 見出し ---------- */
+/* ---------- 見出し（セリフ体で格調を出す） ---------- */
 
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+}
+
+/* アプリ名。存在感が出るよう大きめ＋字間を少し広げる。 */
 h1 {
   color: var(--navy);
-  font-size: 1.9rem;
+  font-size: 2.4rem;
+  letter-spacing: 0.04em;
   margin: 0 0 4px;
 }
 
-/* h1 の下の一言説明（補助テキスト）。 */
+/* h1 の下の一言説明（補助テキスト）。少しイタリックで古風に。 */
 .tagline {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1rem;
   margin: 0 0 20px;
 }
 
-/* セクション見出し。上に余白＋下に薄い罫線で区切りを作る。 */
+/* セクション見出し。上に余白＋下に金の罫線で区切りを作る。 */
 h2 {
   color: var(--navy);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   margin-top: 28px;
   padding-bottom: 6px;
-  border-bottom: 2px solid var(--line);
+  border-bottom: 2px solid var(--gold);
 }
 
 /* 知識カードのタイトルなど。 */
 h3 {
   color: var(--navy);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   margin: 0 0 8px;
 }
 
-/* 区切り線を薄いグレーの細い線に。 */
+/* 区切り線を淡いベージュの細い線に。 */
 hr {
   border: none;
   height: 1px;
@@ -118,17 +145,17 @@ textarea {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: #fffdf8;
   color: var(--navy);
   font: inherit;
 }
 
-/* フォーカス時はアクセント青の枠＋淡いリングで分かりやすく。 */
+/* フォーカス時は金の枠＋淡い金のリングで分かりやすく。 */
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(59, 91, 219, 0.2);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(168, 134, 42, 0.25);
 }
 
 /* フォーム内の入力欄は横幅いっぱいに。各項目の間隔も整える。 */
@@ -150,8 +177,9 @@ textarea:focus {
 }
 
 /* ---------- ボタン ---------- */
-/* 基本（副ボタン）：白背景＋紺枠線の控えめなスタイル。
-   キャンセル・クリア・ログアウトはこのままの見た目になる。 */
+/* 基本（副ボタン）：クリーム背景＋紺枠線の控えめなスタイル。
+   ホバーで金の縁を効かせて書斎の雰囲気に。
+   キャンセル・クリア・ログアウト・ランダム等はこの見た目になる。 */
 button {
   font: inherit;
   cursor: pointer;
@@ -159,51 +187,70 @@ button {
   margin: 4px 4px 4px 0;
   border: 1px solid var(--navy);
   border-radius: 6px;
-  background: #fff;
+  background: #fffdf8;
   color: var(--navy);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 button:hover {
-  background: #f0f2f7;
+  background: #f5eed9;
+  border-color: var(--gold);
+  color: var(--gold-dark);
 }
 
-/* 主ボタン（ログイン・登録/更新する・検索）：濃紺背景＋白文字。 */
+/* 主ボタン（ログイン・登録/更新する・検索）：濃紺背景＋白文字＋金の縁。 */
 #login-form button[type="submit"],
 #submit-button,
 #search-button {
   background: var(--navy);
   color: #fff;
-  border-color: var(--navy);
+  border-color: var(--gold);
 }
 
 #login-form button[type="submit"]:hover,
 #submit-button:hover,
 #search-button:hover {
   background: var(--navy-dark);
+  color: #fff;
+  border-color: var(--gold);
 }
 
 /* ---------- タグ絞り込みボタン（チップ風） ---------- */
+/* 色（背景・文字・枠）はタグ名ごとに app.js が tagColor で設定する。
+   ここでは形（丸いチップ）とサイズだけを決める。 */
 #tag-list button {
-  background: #eef1f8;
-  color: var(--navy);
   border: 1px solid var(--border);
   border-radius: 999px; /* 大きい値で丸いチップ形に */
   padding: 4px 12px;
   font-size: 0.85rem;
+  font-weight: 600;
 }
 
+/* ホバーで少し濃く見えるよう、わずかに透明度を下げる。 */
 #tag-list button:hover {
-  background: #e1e7f5;
+  filter: brightness(0.95);
 }
 
-/* ---------- 登録済みの知識カード ---------- */
-/* 一覧の各件（app.js が作る div）を白カードとして区切る。 */
-#knowledge-list > div {
+/* ---------- 登録済みの知識カード（本の背表紙イメージ） ---------- */
+/* 一覧・ランダムの各件（app.js が作る div）をクリーム色のカードとして区切る。
+   左端の縦ライン（border-left）は app.js が「最初のタグの色」で設定する
+   （背表紙のような彩り）。ホバーで少し浮き上がる。 */
+#knowledge-list > div,
+#random-list > div {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-left: 5px solid var(--gold); /* 既定の背表紙色（JS が上書き） */
+  border-radius: 6px;
   padding: 12px 16px;
   margin-bottom: 12px;
-  background: #fff;
+  background: #fffdf8;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+/* ホバーで浮き上がる演出（影を強め、少し上へ動かす）。 */
+#knowledge-list > div:hover,
+#random-list > div:hover {
+  box-shadow: 0 6px 16px rgba(60, 45, 20, 0.18);
+  transform: translateY(-2px);
 }
 
 #knowledge-list > div p {
@@ -211,7 +258,8 @@ button:hover {
 }
 
 /* カードの中の区切り線は、カードの枠と重なって冗長なので隠す。 */
-#knowledge-list > div hr {
+#knowledge-list > div hr,
+#random-list > div hr {
   display: none;
 }
 
@@ -222,25 +270,17 @@ button:hover {
 }
 
 /* 一覧は「タイトルのみ」表示。タイトル行の余白を詰めて、
-   1件＝1行のスッキリした見た目にする。 */
-#knowledge-list > div h3 {
-  margin: 0;
-}
-
-/* ランダム画面の一覧も、ホーム一覧のカードと同じ見た目に揃える。 */
-#random-list > div {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  background: #fff;
-}
+   1件＝1行のスッキリした見た目にする。クリックできる雰囲気を出す。 */
+#knowledge-list > div h3,
 #random-list > div h3 {
   margin: 0;
+  transition: color 0.15s ease;
 }
-/* カード内の区切り線は枠と重なって冗長なので隠す（ホームと同様）。 */
-#random-list > div hr {
-  display: none;
+
+/* タイトルにホバーしたら金色に変えて、クリックできることを示す。 */
+#knowledge-list > div:hover h3,
+#random-list > div:hover h3 {
+  color: var(--gold-dark);
 }
 
 /* ---------- 詳細画面：色付きの枠＋バッジ ---------- */
@@ -256,15 +296,15 @@ button:hover {
   margin: 6px 0 0;
 }
 
-/* AIの説明：薄いグレー背景＋グレーのアクセント枠線。 */
+/* AIの説明：くすんだ羊皮紙色＋古びた金茶のアクセント枠線。 */
 .field-ai {
-  background: var(--base-bg);
-  border-left: 4px solid #9aa3b2;
+  background: #efe8d6;
+  border-left: 4px solid #9a8a5e;
 }
 
-/* 自分のまとめ：淡い紺/青背景＋紺のアクセント枠線。 */
+/* 自分のまとめ：淡い紺がかったクリーム＋紺のアクセント枠線。 */
 .field-mine {
-  background: #eef1f8;
+  background: #e7e8f0;
   border-left: 4px solid var(--navy);
 }
 
@@ -277,10 +317,10 @@ button:hover {
   font-weight: 700;
 }
 
-/* AI側はグレー系、自分側は紺系にして区別する。 */
+/* AI側は金茶系、自分側は紺系にして区別する。 */
 .field-ai .field-badge {
-  background: #e2e5ea;
-  color: #4b5563;
+  background: #ddd0ad;
+  color: #6b5d39;
 }
 .field-mine .field-badge {
   background: var(--navy);

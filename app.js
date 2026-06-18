@@ -114,6 +114,50 @@ function getWeekStart() {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
 }
 
+// ============================================================
+// タグの色分け（書斎に合う、深く落ち着いたパレット）
+// ============================================================
+// 深緑 / ワインレッド / 濃紺 / マスタード / こげ茶 / 青磁 / 深い紫 / テラコッタ
+const TAG_PALETTE = [
+  "#3d5a40", // 深緑
+  "#7b2d3a", // ワインレッド
+  "#25304d", // 濃紺
+  "#9a7b1f", // マスタード
+  "#5c4327", // こげ茶
+  "#4a6b6f", // 古い青磁色
+  "#4e3a5e", // 深い紫
+  "#a4502f", // テラコッタ
+];
+
+// タグが無いカードの背表紙に使う、控えめな金（既定色）。
+const DEFAULT_SPINE_COLOR = "#c2ad77";
+
+// タグ名から色を決める。同じ名前なら常に同じ色になる。
+//   各文字コードの合計を、パレット数で割った余りでインデックスを選ぶ。
+function tagColor(name) {
+  let sum = 0;
+  for (let i = 0; i < name.length; i++) {
+    sum += name.charCodeAt(i);
+  }
+  return TAG_PALETTE[sum % TAG_PALETTE.length];
+}
+
+// "#rrggbb" を rgba(r,g,b,alpha) の文字列に変換する（薄い背景色を作る用）。
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+
+// カードの左端（背表紙）の色を返す。最初のタグの色、無ければ既定の金。
+function spineColor(item) {
+  if (item.tags && item.tags.length > 0) {
+    return tagColor(item.tags[0]);
+  }
+  return DEFAULT_SPINE_COLOR;
+}
+
 function setupAuth(db) {
   // HTML の要素を取得しておく（毎回探さなくていいよう変数に入れる）。
   const loginForm = document.getElementById("login-form");   // ログインフォーム
@@ -633,6 +677,8 @@ async function loadKnowledgeList(db) {
   data.forEach(function (item) {
     // 1件分の入れ物。
     const card = document.createElement("div");
+    // 左端の縦ライン（背表紙）を、最初のタグの色にする。
+    card.style.borderLeft = "5px solid " + spineColor(item);
 
     // 一覧は「タイトルのみ」表示にする。クリックで詳細画面へ移動する。
     //   ※ AIの説明・自分のまとめ・出典・タグは一覧では出さず、詳細画面で見せる。
@@ -723,6 +769,8 @@ async function loadRandomList(db) {
   listBox.innerHTML = "";
   picked.forEach(function (item) {
     const card = document.createElement("div");
+    // 左端の縦ライン（背表紙）を、最初のタグの色にする。
+    card.style.borderLeft = "5px solid " + spineColor(item);
 
     const titleEl = document.createElement("h3");
     titleEl.textContent = item.title;
@@ -840,6 +888,13 @@ async function loadTagList(db) {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = tag;
+
+    // タグ名から決めた色を、上品に当てる（背景は薄く、文字・枠は濃く）。
+    const c = tagColor(tag);
+    button.style.background = hexToRgba(c, 0.14);
+    button.style.color = c;
+    button.style.borderColor = c;
+
     button.addEventListener("click", function () {
       currentTag = tag; // このタグで絞り込む
       updateFilterStatus();
