@@ -89,6 +89,10 @@ let currentUser = null;
 // フォーム送信時に「新規 insert」か「既存 update」かの判定に使う。
 let editingId = null;
 
+// いま編集中の知識そのもの（新規登録モードなら null）。
+// 画像を選び直さなかったときに既存の image_url を引き継ぐために使う。
+let editingItem = null;
+
 // いまの検索条件。一覧を読み込むとき、この2つを条件として使う。
 let currentKeyword = ""; // キーワード検索の文字（空なら条件なし）
 let currentTag = null;   // 絞り込み中のタグ（null なら条件なし）
@@ -306,6 +310,16 @@ function showDetail(db, item) {
   titleEl.textContent = item.title;
   content.appendChild(titleEl);
 
+  // 画像があれば、タイトルの下に表示する（無ければ何も出さない）。
+  //   大きさは CSS（.detail-image）で最大幅を制限している。
+  if (item.image_url) {
+    const imgEl = document.createElement("img");
+    imgEl.className = "detail-image";
+    imgEl.src = item.image_url;
+    imgEl.alt = item.title;
+    content.appendChild(imgEl);
+  }
+
   // 「AIの説明」「自分のまとめ」を、色付きの枠＋バッジで作る部品。
   //   extraClass = "field-ai" / "field-mine" で色分けする。
   //   値が無い項目では呼ばない＝枠ごと表示しない。
@@ -483,6 +497,53 @@ function setupKnowledge(db) {
         return t !== "";
       });
 
+    // --- 画像の取り扱いを決める -----------------------------
+    //   imageUrl には最終的に image_url 列へ保存する値を入れる。
+    //     ・新しい画像を選んだ → アップロードして公開URLを入れる
+    //     ・「画像を削除する」にチェック → null（消す）
+    //     ・どちらでもない（新規）→ null のまま
+    //     ・どちらでもない（編集）→ 既存の image_url を維持する
+    const fileInput = document.getElementById("image");
+    const removeImage = document.getElementById("remove-image");
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+    let imageUrl = null;
+    if (editingId !== null && editingItem) {
+      // 編集モードでは既定で既存の画像を引き継ぐ。
+      imageUrl = editingItem.image_url || null;
+    }
+
+    if (file) {
+      // 新しい画像が選ばれた → Storage にアップロードして公開URLを得る。
+      showStatus("画像をアップロード中…", false);
+
+      // ファイル名の衝突を防ぐため、保存名を必ずユニークにする。
+      //   日本語ファイル名でも安全なよう、拡張子だけ使ってランダム名にする。
+      const ext = file.name.includes(".")
+        ? file.name.split(".").pop().toLowerCase()
+        : "img";
+      const path =
+        Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+
+      const { error: upErr } = await db.storage
+        .from("knowledge-images")
+        .upload(path, file);
+      if (upErr) {
+        console.error("❌ 画像のアップロードに失敗:", upErr);
+        showStatus("❌ 画像のアップロードに失敗しました: " + upErr.message, true);
+        return; // 画像が保存できなければ、本体も保存せず中断する。
+      }
+
+      // 公開URLを取得して、これを image_url に保存する。
+      const { data: pub } = db.storage
+        .from("knowledge-images")
+        .getPublicUrl(path);
+      imageUrl = pub.publicUrl;
+    } else if (removeImage && removeImage.checked) {
+      // 新しい画像は選ばれていないが、「削除する」がオン → 画像を消す。
+      imageUrl = null;
+    }
+
     // テーブルに渡すデータ。キー名は knowledge の列名と一致させる。
     // 任意項目が空文字のときは null を入れておく（空の印）。
     const record = {
@@ -491,6 +552,7 @@ function setupKnowledge(db) {
       my_summary: mySummary || null,
       source: source || null,
       tags: tags, // tags 列は text[]（配列型）なので配列をそのまま渡す
+      image_url: imageUrl, // 画像の公開URL（無ければ null）
     };
 
     // --- 新規登録 か 編集 かで処理を分ける -----------------
@@ -538,6 +600,7 @@ function setupKnowledge(db) {
 function enterEditMode(item) {
   // どの行を編集中かを覚える（フォーム送信時に使う）。
   editingId = item.id;
+  editingItem = item; // 既存の image_url を引き継ぐために本体も覚える
 
   // 現在の内容をフォームの各入力欄に入れる。
   document.getElementById("title").value = item.title || "";
@@ -546,6 +609,25 @@ function enterEditMode(item) {
   document.getElementById("source").value = item.source || "";
   // tags は配列なので、表示用にカンマ区切りの文字列へ戻す。
   document.getElementById("tags").value = item.tags ? item.tags.join(", ") : "";
+
+  // 画像まわりをリセットしてから、現状に合わせて表示する。
+  //   ファイル input には既存ファイルを入れられないので、
+  //   「いまの画像のプレビュー＋削除チェック」で対応する。
+  const fileInput = document.getElementById("image");
+  const removeImage = document.getElementById("remove-image");
+  const currentBox = document.getElementById("current-image-box");
+  const currentPreview = document.getElementById("current-image-preview");
+  if (fileInput) fileInput.value = ""; // 前回選んだファイルが残らないように
+  if (removeImage) removeImage.checked = false;
+  if (item.image_url) {
+    // 既存画像あり：プレビューを表示する。
+    currentPreview.src = item.image_url;
+    currentBox.hidden = false;
+  } else {
+    // 既存画像なし：プレビューは隠す。
+    currentPreview.removeAttribute("src");
+    currentBox.hidden = true;
+  }
 
   // 見た目を「編集モード」に切り替える。
   document.getElementById("form-title").textContent = "知識を編集";
@@ -559,7 +641,16 @@ function enterEditMode(item) {
 // (1-c) 編集モードを抜ける：フォームを空にして新規登録モードへ戻す。
 function exitEditMode() {
   editingId = null; // 「編集中ではない」状態に戻す
+  editingItem = null; // 編集中の本体も忘れる
   document.getElementById("knowledge-form").reset(); // 入力欄を空にする
+
+  // 画像のプレビュー・削除チェックも初期状態（新規）に戻す。
+  const currentBox = document.getElementById("current-image-box");
+  const currentPreview = document.getElementById("current-image-preview");
+  const removeImage = document.getElementById("remove-image");
+  if (removeImage) removeImage.checked = false;
+  if (currentPreview) currentPreview.removeAttribute("src");
+  if (currentBox) currentBox.hidden = true;
 
   // 見た目を「新規登録モード」に戻す。
   document.getElementById("form-title").textContent = "知識を登録";

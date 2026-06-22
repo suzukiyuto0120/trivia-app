@@ -320,6 +320,24 @@ button:hover {
   animation: cardFadeIn 0.35s ease both;
 }
 
+/* ---------- 画像（詳細画面の表示／編集時のプレビュー） ---------- */
+/* 大きすぎないよう最大幅を制限し、角丸＋ベージュ枠で書斎に馴染ませる。 */
+.detail-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(60, 45, 20, 0.12);
+}
+
+/* 編集フォームのプレビューは、本文の画像より控えめなサイズに抑える。 */
+#current-image-box .detail-image {
+  max-width: 200px;
+  margin: 8px 0;
+}
+
 /* ---------- 詳細画面：色付きの枠＋バッジ ---------- */
 /* AIの説明 / 自分のまとめ を視覚的に分けるための枠。 */
 .field-block {

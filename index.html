@@ -182,6 +182,22 @@
           <input type="text" id="tags" placeholder="例: 歴史, 科学" />
         </div>
 
+        <div>
+          <label for="image">画像（任意）</label><br />
+          <!-- accept="image/*" で画像ファイルだけ選べるようにする。 -->
+          <input type="file" id="image" accept="image/*" />
+          <!-- 編集時、いまの画像のプレビュー。新規や画像なしのときは hidden。
+               app.js（enterEditMode）が src と表示／非表示を切り替える。 -->
+          <div id="current-image-box" hidden>
+            <img id="current-image-preview" class="detail-image" alt="現在の画像" />
+            <label>
+              <!-- オンにすると保存時に既存画像を削除（image_url を null に）。 -->
+              <input type="checkbox" id="remove-image" />
+              画像を削除する
+            </label>
+          </div>
+        </div>
+
         <!-- 送信ボタン。新規=「登録する」/ 編集=「更新する」に切り替える。 -->
         <button type="submit" id="submit-button">登録する</button>
         <!-- 編集をやめるためのキャンセルボタン。
