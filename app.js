@@ -439,6 +439,34 @@ function setupNavigation(db) {
   const randomBackButton = document.getElementById("random-back-button");
   const randomShuffleButton = document.getElementById("random-shuffle-button");
   const showAllButton = document.getElementById("show-all-button");
+  const editBackButton = document.getElementById("edit-back-button");
+
+  // 登録/編集画面の「← 一覧に戻る」：入力中の内容があるときだけ確認を挟んでホームへ。
+  editBackButton.addEventListener("click", function () {
+    // 主要なテキスト入力欄のいずれかに中身があれば「入力あり」とみなす。
+    // （code_language のドロップダウンや画像は判定に含めない）
+    const hasInput = [
+      "title",
+      "ai_explanation",
+      "my_summary",
+      "source",
+      "tags",
+      "code",
+      "code_explanation",
+    ].some(function (id) {
+      const elInput = document.getElementById(id);
+      return elInput && elInput.value.trim() !== "";
+    });
+
+    // 入力ありのときだけ確認。キャンセルなら画面に留まる。
+    if (hasInput) {
+      const ok = window.confirm("入力中の内容は保存されません。一覧に戻りますか？");
+      if (!ok) return;
+    }
+
+    exitEditMode();   // フォームを空にして新規モードへ戻す（既存関数）
+    showView("home"); // ホームへ
+  });
 
   // 「＋ 新規登録」：新規モードにしてから編集画面へ。
   newButton.addEventListener("click", function () {
