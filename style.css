@@ -338,6 +338,58 @@ button:hover {
   margin: 8px 0;
 }
 
+/* ---------- 詳細画面：コード＋解説（2カラム） ---------- */
+/* PC では左右2カラム、スマホでは上下1カラム（下のメディアクエリで切替）。 */
+.code-block-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 12px 0 16px;
+  align-items: start;
+}
+
+/* 各カラム（コード列・解説列）。 */
+.code-block-wrap .code-col {
+  min-width: 0; /* grid 内で pre が横にはみ出しても縮められるように */
+}
+
+/* コードの枠（pre）。等幅・余白・角丸・横スクロール可。
+   背景はテーマCSS（atom-one-dark）の暗色に合わせ、枠と余白で馴染ませる。 */
+.code-block-wrap pre {
+  margin: 8px 0 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto; /* 長い行は横スクロール（折り返さない） */
+  background: #282c34; /* atom-one-dark の背景色 */
+}
+
+/* pre 内の code は等幅フォント＋適度な padding。
+   （hljs がトークンに色を付けるので、文字色はテーマに任せる） */
+.code-block-wrap pre code.hljs {
+  display: block;
+  padding: 12px 14px;
+  font-family: "SFMono-Regular", "Menlo", "Consolas", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-radius: 8px;
+}
+
+/* 解説の本文：入力時の改行を活かす（既存の本文と同じ考え方）。 */
+.code-explanation {
+  white-space: pre-wrap;
+  margin: 8px 0 0;
+}
+
+/* コード/解説のバッジ色。既存 field-badge の雰囲気に合わせる。 */
+.code-badge {
+  background: var(--navy);
+  color: #fff;
+}
+.code-exp-badge {
+  background: #ddd0ad;
+  color: #6b5d39;
+}
+
 /* ---------- 詳細画面：色付きの枠＋バッジ ---------- */
 /* AIの説明 / 自分のまとめ を視覚的に分けるための枠。 */
 .field-block {
@@ -418,6 +470,10 @@ button:hover {
   /* 狭い画面では一覧・ランダムを1列に戻して読みやすくする。 */
   #knowledge-list,
   #random-list {
+    grid-template-columns: 1fr;
+  }
+  /* コード＋解説も、狭い画面では上下1カラムに積む。 */
+  .code-block-wrap {
     grid-template-columns: 1fr;
   }
 }

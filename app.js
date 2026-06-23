@@ -365,6 +365,60 @@ function showDetail(db, item) {
     addPlainBlock("タグ", item.tags.join(", "));
   }
 
+  // コードがあるときだけ、「コード（左）＋解説（右）」を隣り合わせで表示する。
+  //   レイアウト（2カラム／スマホで1カラム）は CSS（.code-block-wrap）が担う。
+  if (item.code) {
+    const wrap = document.createElement("div");
+    wrap.className = "code-block-wrap";
+
+    // --- 左：コード ---
+    const codeCol = document.createElement("div");
+    codeCol.className = "code-col";
+
+    const codeBadge = document.createElement("span");
+    codeBadge.className = "field-badge code-badge";
+    codeBadge.textContent = "コード";
+    codeCol.appendChild(codeBadge);
+
+    const pre = document.createElement("pre");
+    const codeEl = document.createElement("code");
+    // 言語があれば highlight.js 用のクラスを付ける。
+    if (item.code_language) {
+      codeEl.className = "language-" + item.code_language;
+    }
+    // 重要：コードは必ず textContent で入れる（< > & の誤解釈・XSS を防ぐ）。
+    codeEl.textContent = item.code;
+    pre.appendChild(codeEl);
+    codeCol.appendChild(pre);
+    wrap.appendChild(codeCol);
+
+    // --- 右：解説（空なら本文は出さず、列だけ用意） ---
+    const expCol = document.createElement("div");
+    expCol.className = "code-col";
+
+    const expBadge = document.createElement("span");
+    expBadge.className = "field-badge code-exp-badge";
+    expBadge.textContent = "解説";
+    expCol.appendChild(expBadge);
+
+    if (item.code_explanation) {
+      const expBody = document.createElement("p");
+      expBody.className = "code-explanation";
+      // 入力時の改行を活かす（CSS の white-space: pre-wrap と合わせる）。
+      expBody.textContent = item.code_explanation;
+      expCol.appendChild(expBody);
+    }
+    wrap.appendChild(expCol);
+
+    content.appendChild(wrap);
+
+    // DOM に入れた後で、該当の code 要素だけを明示的にハイライトする。
+    //   hljs が読み込めていない場合に備えて存在チェックしておく。
+    if (window.hljs) {
+      hljs.highlightElement(codeEl);
+    }
+  }
+
   // 編集・削除ボタンは、ログイン中(currentUser がある)のときだけ表示する。
   const editButton = document.getElementById("detail-edit-button");
   const deleteButton = document.getElementById("detail-delete-button");
@@ -467,6 +521,10 @@ function setupKnowledge(db) {
     const mySummary = document.getElementById("my_summary").value.trim();
     const source = document.getElementById("source").value.trim();
     const tagsRaw = document.getElementById("tags").value;
+    // コード関連（すべて任意）。コードと説明は前後空白を削る。
+    const codeValue = document.getElementById("code").value.trim();
+    const codeExpValue = document.getElementById("code_explanation").value.trim();
+    const codeLangValue = document.getElementById("code_language").value;
 
     // --- 入力チェック（新規でも編集でも同じルール） -------
     // タイトルは必須。
@@ -553,6 +611,9 @@ function setupKnowledge(db) {
       source: source || null,
       tags: tags, // tags 列は text[]（配列型）なので配列をそのまま渡す
       image_url: imageUrl, // 画像の公開URL（無ければ null）
+      code: codeValue || null, // プログラムコード（無ければ null）
+      code_explanation: codeExpValue || null, // コードの説明（無ければ null）
+      code_language: codeLangValue || null, // コードの言語（無ければ null）
     };
 
     // --- 新規登録 か 編集 かで処理を分ける -----------------
@@ -609,6 +670,11 @@ function enterEditMode(item) {
   document.getElementById("source").value = item.source || "";
   // tags は配列なので、表示用にカンマ区切りの文字列へ戻す。
   document.getElementById("tags").value = item.tags ? item.tags.join(", ") : "";
+
+  // コード関連も各入力欄に入れる（無ければ空・「指定なし」に戻る）。
+  document.getElementById("code").value = item.code || "";
+  document.getElementById("code_explanation").value = item.code_explanation || "";
+  document.getElementById("code_language").value = item.code_language || "";
 
   // 画像まわりをリセットしてから、現状に合わせて表示する。
   //   ファイル input には既存ファイルを入れられないので、
