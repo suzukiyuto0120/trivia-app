@@ -443,6 +443,28 @@ button:hover {
   color: #fff;
 }
 
+/* ---------- 詳細画面：実行結果（ターミナル風・横幅いっぱい） ---------- */
+.code-result-block {
+  margin: 12px 0 16px;
+}
+.code-result-pre {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;        /* 長い行は横スクロール（折り返さない） */
+  background: #1e1e1e;     /* ターミナル風の暗い背景 */
+  color: #e6e6e6;          /* 明るいグレーの文字 */
+  font-family: "SFMono-Regular", "Menlo", "Consolas", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre;        /* 改行・空白をそのまま（桁揃え維持） */
+}
+.code-result-badge {
+  background: #333;
+  color: #fff;
+}
+
 /* ============================================================
    スマホ対応（画面幅 600px 以下）
    ============================================================

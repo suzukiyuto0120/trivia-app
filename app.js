@@ -419,6 +419,25 @@ function showDetail(db, item) {
     }
   }
 
+  // 実行結果：値があれば、コード＋解説の下に横幅いっぱいで表示する（ターミナル風）。
+  if (item.code_result) {
+    const resultBlock = document.createElement("div");
+    resultBlock.className = "code-result-block";
+
+    const resultBadge = document.createElement("span");
+    resultBadge.className = "field-badge code-result-badge";
+    resultBadge.textContent = "実行結果";
+    resultBlock.appendChild(resultBadge);
+
+    const pre = document.createElement("pre");
+    pre.className = "code-result-pre";
+    // 出力はそのまま表示。安全のため textContent（innerHTML は使わない）。
+    pre.textContent = item.code_result;
+    resultBlock.appendChild(pre);
+
+    content.appendChild(resultBlock);
+  }
+
   // 編集・削除ボタンは、ログイン中(currentUser がある)のときだけ表示する。
   const editButton = document.getElementById("detail-edit-button");
   const deleteButton = document.getElementById("detail-delete-button");
@@ -453,6 +472,7 @@ function setupNavigation(db) {
       "tags",
       "code",
       "code_explanation",
+      "code_result",
     ].some(function (id) {
       const elInput = document.getElementById(id);
       return elInput && elInput.value.trim() !== "";
@@ -553,6 +573,7 @@ function setupKnowledge(db) {
     const codeValue = document.getElementById("code").value.trim();
     const codeExpValue = document.getElementById("code_explanation").value.trim();
     const codeLangValue = document.getElementById("code_language").value;
+    const codeResultValue = document.getElementById("code_result").value.trim();
 
     // --- 入力チェック（新規でも編集でも同じルール） -------
     // タイトルは必須。
@@ -642,6 +663,7 @@ function setupKnowledge(db) {
       code: codeValue || null, // プログラムコード（無ければ null）
       code_explanation: codeExpValue || null, // コードの説明（無ければ null）
       code_language: codeLangValue || null, // コードの言語（無ければ null）
+      code_result: codeResultValue || null, // 実行結果の例（無ければ null）
     };
 
     // --- 新規登録 か 編集 かで処理を分ける -----------------
@@ -703,6 +725,7 @@ function enterEditMode(item) {
   document.getElementById("code").value = item.code || "";
   document.getElementById("code_explanation").value = item.code_explanation || "";
   document.getElementById("code_language").value = item.code_language || "";
+  document.getElementById("code_result").value = item.code_result || "";
 
   // 画像まわりをリセットしてから、現状に合わせて表示する。
   //   ファイル input には既存ファイルを入れられないので、
