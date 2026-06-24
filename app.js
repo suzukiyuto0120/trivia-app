@@ -402,11 +402,7 @@ function showDetail(db, item) {
     expCol.appendChild(expBadge);
 
     if (item.code_explanation) {
-      const expBody = document.createElement("p");
-      expBody.className = "code-explanation";
-      // 入力時の改行を活かす（CSS の white-space: pre-wrap と合わせる）。
-      expBody.textContent = item.code_explanation;
-      expCol.appendChild(expBody);
+      renderCodeExplanation(expCol, item.code_explanation, item.code_language);
     }
     wrap.appendChild(expCol);
 
@@ -446,6 +442,68 @@ function showDetail(db, item) {
 
   // 詳細画面へ切り替える。
   showView("detail");
+}
+
+// 「解説」テキストを大見出し／処理カード（小見出し＋コード）／説明文に整形して container に並べる。
+// 約束：先頭が "# " の行＝大見出し。"【…】"だけの行＝小見出し（その直後に続く行＝コード）。
+//       空行で区切ったそれ以外のかたまり＝説明文。小見出しに続く説明文はそのカードの中へ。
+// 安全のため、テキストはすべて textContent で挿入する（innerHTML は使わない）。
+function renderCodeExplanation(container, text, language) {
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const blocks = normalized.split(/\n\s*\n/); // 1行以上の空行で区切る
+  let currentCard = null; // いま開いている処理カード（無ければ null）
+
+  blocks.forEach(function (rawBlock) {
+    const block = rawBlock.replace(/\s+$/, "");
+    if (block.trim() === "") return;
+
+    const lines = block.split("\n");
+    const firstLine = lines[0].trim();
+
+    // (1) 大見出し："# 見出し"（全角＃や空白なしも許容）
+    const sectionMatch = firstLine.match(/^[#＃]\s*(.+)$/);
+    if (sectionMatch) {
+      currentCard = null;
+      const head = document.createElement("div");
+      head.className = "exp-section";
+      head.textContent = sectionMatch[1].trim();
+      container.appendChild(head);
+      return;
+    }
+
+    // (2) 小見出し：その行が "【…】" だけ。続く行はコード扱い。
+    if (/^【.+】$/.test(firstLine)) {
+      const card = document.createElement("div");
+      card.className = "exp-item";
+
+      const head = document.createElement("div");
+      head.className = "exp-item-head";
+      head.textContent = firstLine;
+      card.appendChild(head);
+
+      const codeText = lines.slice(1).join("\n").trim();
+      if (codeText !== "") {
+        const pre = document.createElement("pre");
+        pre.className = "exp-code";
+        const codeEl = document.createElement("code");
+        if (language) codeEl.className = "language-" + language;
+        codeEl.textContent = codeText; // 安全：textContent
+        pre.appendChild(codeEl);
+        card.appendChild(pre);
+        if (window.hljs) hljs.highlightElement(codeEl);
+      }
+
+      container.appendChild(card);
+      currentCard = card;
+      return;
+    }
+
+    // (3) それ以外＝説明文。カードが開いていればその中へ、無ければ container へ。
+    const p = document.createElement("p");
+    p.className = "exp-text";
+    p.textContent = block; // 安全：textContent（pre-wrap で改行を保持）
+    (currentCard || container).appendChild(p);
+  });
 }
 
 // (N-3) 画面切り替え用ボタンの配線（新規・戻る・編集・削除）。

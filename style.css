@@ -465,6 +465,51 @@ button:hover {
   color: #fff;
 }
 
+/* ---------- 詳細画面：解説の整形（大見出し／処理カード／コード／本文） ---------- */
+.exp-section {
+  font-family: var(--serif);
+  color: var(--navy);
+  font-size: 1.1rem;
+  margin: 16px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--gold);
+}
+.exp-section:first-child { margin-top: 4px; }
+.exp-item {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  background: #fffdf8;
+  padding: 10px 12px;
+  margin: 0 0 10px;
+}
+.exp-item-head {
+  color: var(--gold-dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 6px;
+}
+.exp-code {
+  margin: 0 0 6px;
+  border-radius: 6px;
+  overflow-x: auto;          /* 長い行は横スクロール */
+  background: #282c34;       /* atom-one-dark の背景色 */
+}
+.exp-code code,
+.exp-code code.hljs {
+  display: block;
+  padding: 8px 10px;
+  font-family: "SFMono-Regular", "Menlo", "Consolas", "Courier New", monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  border-radius: 6px;
+}
+.exp-text {
+  white-space: pre-wrap;     /* 入力時の改行を保持 */
+  margin: 0 0 8px;
+}
+.exp-item .exp-text { margin-bottom: 0; }
+
 /* ============================================================
    スマホ対応（画面幅 600px 以下）
    ============================================================
